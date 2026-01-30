@@ -12,13 +12,15 @@
 #pragma GCC diagnostic ignored "-Wunused-variable"
 
 #include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/stat.h>
 #include <time.h>
-#include <errno.h>
 
 typedef size_t (*hash_func)(const void*, size_t);
 
@@ -109,11 +111,13 @@ struct distribution {
 
 static struct distribution hash_distribution_wordlist(hash_func hash)
 {
+    fprintf(stderr, "testing distribution, opening wordlist.txt\n");
     FILE* f = fopen("wordlist.txt", "r");
     if (f == NULL) {
         fprintf(stderr, "fatal: failed to open wordlist.txt: %m\n");
         abort();
     }
+    fprintf(stderr, "opened wordlist.txt\n");
 
     double buckets[ENTRY_COUNT] = {0};
     char word[1024];
@@ -138,7 +142,7 @@ static void walk(const char *base, int depth, int* count, double* buckets, size_
 {
     constexpr typeof(depth) MAX_DEPTH = 64;
     constexpr size_t MAX_PATH = 4096;
-    constexpr int MAX_SAMPLES = 1<<21;
+    constexpr int MAX_SAMPLES = 1<<15;
     if (depth >= MAX_DEPTH)
         return;
 
@@ -165,13 +169,14 @@ static void walk(const char *base, int depth, int* count, double* buckets, size_
         buckets[h % buckets_size] += 1;
         *count += 1;
         if (*count > MAX_SAMPLES)
-            return;
+            break;
 
         struct stat st;
-        if (lstat(path, &st) == 0 && S_ISDIR(st.st_mode)) {
+        if (fstatat(dirfd(d), de->d_name, &st, AT_SYMLINK_NOFOLLOW) == 0 &&
+            S_ISDIR(st.st_mode)) {
             walk(path, depth + 1, count, buckets, buckets_size, hash);
             if (*count > MAX_SAMPLES)
-                return;
+                break;
         }
     }
     closedir(d);
