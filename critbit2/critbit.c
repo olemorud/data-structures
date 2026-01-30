@@ -278,7 +278,6 @@ int critbit_insert(struct critbit_tree* cbt, const void* data, size_t size)
     return OK;
 }
 
-#include <stdio.h>
 int critbit_remove(struct critbit_tree* cbt, const void* data, size_t size)
 {
     if (cbt->root == NULL) {
