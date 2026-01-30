@@ -11,7 +11,7 @@
 
 /* CRITBIT NODES
  * =============
- * A critbit node is either an internal node or leafs, which contain raw data (e.g. strings).
+ * A critbit node is either an internal node or a leaf (which contains raw data ,e.g. strings).
  * The least significant bit is used to tag internal nodes, and allocations must therefore be
  * guaranteed to be aligned for portability.
  * `is_leaf()`, `is_internal_node()`, `untag_critbit_node_ptr()` and
@@ -184,6 +184,13 @@ static void delete_node(struct critbit_tree* cbt, union critbit_node* n)
     free(n);
 }
 
+/* returns a bitmask that indicates the first bit (from LSB to MSB) that is not equal*/
+static uint8_t mask_first_different_bit(uint8_t a, uint8_t b)
+{
+    assert(a != b);
+    return (1 << __builtin_ctz(a ^ b));
+}   
+
 /* returns the index of the first byte in `a` and `b` that is not equal.
  * If a and b are equal, FAIL is returned. Otherwise OK. */
 static int calculate_critbit(const uint8_t* a, size_t a_size, const uint8_t* b, size_t b_size, size_t* byte_index, uint8_t* bitmask)
@@ -196,17 +203,10 @@ static int calculate_critbit(const uint8_t* a, size_t a_size, const uint8_t* b, 
         }
     }
     *byte_index = i;
-    *bitmask = ~(1 << __builtin_ctz(a[i] ^ b[i]));
+    *bitmask = ~mask_first_different_bit(a[i], b[i]);
 
     return OK;
 }
-
-/* returns a bitmask that indicates the first bit (from LSB to MSB) that is not equal*/
-static uint8_t mask_first_different_bit(uint8_t a, uint8_t b)
-{
-    assert(a != b);
-    return (1 << __builtin_ctz(a ^ b));
-}   
 
 int critbit_insert(struct critbit_tree* cbt, const void* data, size_t size)
 {
@@ -402,5 +402,3 @@ struct critbit_iterator critbit_allprefixed(struct critbit_tree* cbt, const void
         return (struct critbit_iterator){.root = top};
     }
 }
-
-
