@@ -4,7 +4,7 @@ CC       := gcc
 BUILD    := debug
 PLATFORM ?= linux
 
-DEFINES := CACHE_LINE_SIZE="((size_t)$(shell cat /sys/devices/system/cpu/cpu0/cache/index0/coherency_line_size))"
+DEFINES := CACHE_LINE_SIZE="((size_t)$(shell ./get-cache-line-size.sh))"
 
 CFLAGS.gcc         := -std=c23 -Wall -Wextra -fanalyzer -g $(addprefix -D, $(DEFINES))
 CFLAGS.gcc.debug   := $(CFLAGS.gcc) -O0 -ggdb -fsanitize=address,undefined
