@@ -4,7 +4,7 @@ CC := clang
 	$(CC) $(CFLAGS) -c $<
 
 tests/%: tests/%.c
-	$(CC) $(CFLAGS) -o $@ $<
+	$(CC) -I. $(CFLAGS) -o $@ $<
 
 demo: demo-ring-buffer.o ring-buffer-int-128.o
 	$(CC) $(CFLAGS) -o $@ $^
